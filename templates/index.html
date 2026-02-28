@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Trade AI - Dashboard</title>
+    <style>
+        /* Estilo moderno y oscuro tipo TradingView */
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: #161b22;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            border: 1px solid #30363d;
+        }
+        h1 { color: #58a6ff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.3); }
+        .status-card {
+            background: #0d1117;
+            border-left: 5px solid #238636;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .metric { font-size: 24px; color: #3fb950; font-weight: bold; }
+        .btn {
+            background-color: #21262d;
+            color: #58a6ff;
+            border: 1px solid #f0f6fc1a;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover { background-color: #30363d; border-color: #8b949e; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Aura Trade AI 🛰️</h1>
+        <p>Panel de Control del Bot de Trading</p>
+
+        <div class="status-card">
+            <p>Estado del Motor de IA: <strong>EJECUTANDO</strong></p>
+            <p>Conexión Telegram: <span style="color: #3fb950;">Sincronizado</span></p>
+        </div>
+
+        <div style="display: flex; justify-content: space-around;">
+            <div>
+                <p>Ganancia Hoy</p>
+                <div class="metric">+{{ profit_hoy }}%</div>
+            </div>
+            <div>
+                <p>Operaciones Activas</p>
+                <div class="metric">{{ ops_activas }}</div>
+            </div>
+        </div>
+
+        <hr style="border: 0.5px solid #30363d; margin: 20px 0;">
+        
+        <button class="btn" onclick="location.reload()">Refrescar Datos</button>
+    </div>
+
+</body>
+</html>
