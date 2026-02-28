@@ -1,5 +1,5 @@
 ccxt
-pandas
-pandas_ta
+pandas==2.0.3
+pandas_ta==0.3.14b0
 scikit-learn
 requests
