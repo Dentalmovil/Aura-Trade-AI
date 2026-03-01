@@ -2,8 +2,8 @@ name: Aura Trade AI Runner
 
 on:
   schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+    - cron: '0 * * * *' # Se ejecuta cada hora automáticamente
+  workflow_dispatch: # Permite ejecución manual
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install ccxt pandas scikit-learn requests plotly flask
+          pip install ccxt pandas scikit-learn requests
           pip install pandas_ta --pre
 
       - name: Ejecutar Bot
