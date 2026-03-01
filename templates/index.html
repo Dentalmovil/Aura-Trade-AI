@@ -3,66 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura Trade AI - Master Control</title>
+    <title>Aura Trade AI - Master Dashboard</title>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --border: #30363d; }
-        body { background: var(--bg); color: #c9d1d9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid var(--border); width: 100%; max-width: 400px; box-sizing: border-box; position: relative; }
-        .alerta-activa { border-color: var(--green); box-shadow: 0 0 15px rgba(63, 185, 80, 0.3); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        body { background: var(--bg); color: #c9d1d9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid var(--border); width: 100%; max-width: 450px; box-sizing: border-box; }
+        .alerta-activa { border-color: var(--green); box-shadow: 0 0 20px rgba(63, 185, 80, 0.4); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(63, 185, 80, 0); } 100% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0); } }
+        .chart-container { margin: 15px 0; background: #0d1117; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
         .box { background: #0d1117; padding: 10px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
-        .val { font-size: 1.1rem; font-weight: bold; color: white; display: block; }
-        
-        .btn-panic { background: var(--red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .btn-panic { background: var(--red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; transition: 0.3s; }
         .btn-start { background: var(--green); }
-        
-        .historial { margin-top: 15px; background: #0d1117; border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
-        .historial-item { font-size: 0.75rem; padding: 6px 0; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; }
-        
-        input { background: #0d1117; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 5px; width: 100%; margin: 5px 0; box-sizing: border-box; }
-        .btn-save { background: var(--accent); color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .historial-item { font-size: 0.7rem; padding: 5px 0; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; }
+        input { background: #0d1117; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 5px; width: 48%; margin-bottom: 10px; }
     </style>
 </head>
-<body>
-    <div class="container {{ 'alerta-activa' if alerta }}">
-        <h2 style="color: var(--accent); margin: 0 0 5px 0; text-align: center;">Aura Trade AI 🛰️</h2>
-        <p style="font-size: 0.8rem; text-align: center; color: {{ var('--green') if config.activo else var('--red') }}; margin-bottom: 15px;">
-            ● {{ 'SISTEMA ESCANEANDO' if config.activo else 'SISTEMA DETENIDO' }}
+<body onload="verificarAlerta()">
+    <audio id="audioAlerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <div class="container {{ 'alerta-activa' if alerta }}" id="mainContainer">
+        <h3 style="color: var(--accent); margin: 0; text-align: center;">Aura Trade AI 🛰️</h3>
+        
+        <div class="chart-container">
+            {{ graph_html | safe }}
+        </div>
+
+        <p id="txtSenal" style="text-align:center; font-weight:bold; color: {{ 'var(--green)' if alerta else 'white' }};">
+            {{ senal }}
         </p>
 
         <a href="/toggle" style="text-decoration: none;">
             <button class="btn-panic {{ 'btn-start' if not config.activo }}">
-                {{ 'DETENER BOT (PÁNICO)' if config.activo else 'REANUDAR SISTEMA' }}
+                {{ 'PAUSAR BOT' if config.activo else 'REANUDAR' }}
             </button>
         </a>
 
-        <div style="background: #0d1117; padding: 8px; border-radius: 5px; text-align: center; border: 1px solid var(--border); margin-bottom: 15px;">
-            <span style="font-size: 0.85rem; color: var(--accent);">{{ senal }}</span>
-        </div>
-
         <div class="grid">
-            <div class="box"><span style="color: #8b949e; font-size: 0.6rem;">PRECIO</span><span class="val">${{ precio }}</span></div>
-            <div class="box"><span style="color: #8b949e; font-size: 0.6rem;">RSI</span><span class="val">{{ rsi }}</span></div>
+            <div class="box"><span style="color: #8b949e; font-size: 0.6rem;">PRECIO</span><span style="display:block; font-weight:bold;">${{ precio }}</span></div>
+            <div class="box"><span style="color: #8b949e; font-size: 0.6rem;">RSI</span><span style="display:block; font-weight:bold;">{{ rsi }}</span></div>
         </div>
 
-        <div class="historial">
-            <p style="margin: 0 0 8px 0; font-size: 0.8rem; font-weight: bold;">Historial Reciente:</p>
+        <div style="background: #0d1117; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+            <p style="margin:0 0 5px 0; font-size:0.75rem; font-weight:bold; color:var(--accent);">Historial de Señales:</p>
             {% for item in historial %}
-            <div class="historial-item">
-                <span>{{ item.hora }} - <strong>{{ item.par }}</strong></span>
-                <span style="color: var(--green);">${{ item.precio }}</span>
-            </div>
+            <div class="historial-item"><span>{{ item.hora }} <b>{{ item.par }}</b></span><span style="color:var(--green);">${{ item.precio }}</span></div>
             {% endfor %}
         </div>
 
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
-            <form action="/update" method="POST">
-                <input type="text" name="symbol" value="{{ config.symbol }}">
-                <input type="number" name="rsi_limite" value="{{ config.rsi_limite }}">
-                <button type="submit" class="btn-save">GUARDAR AJUSTES</button>
-            </form>
-        </div>
+        <form action="/update" method="POST" style="margin-top: 15px; display: flex; justify-content: space-between; flex-wrap: wrap;">
+            <input type="text" name="symbol" value="{{ config.symbol }}">
+            <input type="number" name="rsi_limite" value="{{ config.rsi_limite }}">
+            <button type="submit" style="background:var(--accent); border:none; color:white; padding:10px; width:100%; border-radius:5px; font-weight:bold; cursor:pointer;">ACTUALIZAR PAR / RSI</button>
+        </form>
     </div>
+
+    <script>
+        function verificarAlerta() {
+            const tieneAlerta = "{{ alerta }}" === "True";
+            if (tieneAlerta) {
+                const audio = document.getElementById("audioAlerta");
+                audio.play().catch(e => console.log("Esperando interacción del usuario para audio"));
+            }
+            // Auto-recarga cada 30 segundos para sincronizar con el bot
+            setTimeout(() => { location.reload(); }, 30000);
+        }
+    </script>
 </body>
 </html>
+
 
