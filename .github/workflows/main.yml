@@ -15,18 +15,19 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12' # ESTA es la versión que pide el error
+          python-version: '3.12'
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install ccxt pandas scikit-learn requests
-          pip install pandas_ta --pre # Forzamos la instalación de la versión más compatible
+          pip install ccxt pandas scikit-learn requests plotly
+          pip install pandas_ta --pre
 
       - name: Ejecutar Bot
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
+
 
 
