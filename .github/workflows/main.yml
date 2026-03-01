@@ -2,8 +2,8 @@ name: Aura Trade AI Runner
 
 on:
   schedule:
-    - cron: '0 * * * *' # Se ejecuta cada hora
-  workflow_dispatch: # Botón manual
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,13 +15,13 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11' # CAMBIADO de 3.10 a 3.11 para compatibilidad
+          python-version: '3.12' # ESTA es la versión que pide el error
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           pip install ccxt pandas scikit-learn requests
-          pip install pandas-ta # Instalación individual para evitar conflictos
+          pip install pandas_ta --pre # Forzamos la instalación de la versión más compatible
 
       - name: Ejecutar Bot
         env:
