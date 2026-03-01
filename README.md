@@ -1,7 +1,4 @@
 # 🛰️ Aura Trade AI - Sistema de Monitoreo Pro
-<p align="center">
-  <img src="logo.png" width="250">
-</p>
 
 ![GitHub Actions](https://img.shields.io/badge/Status-Active-success?style=for-the-badge&logo=githubactions)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)
