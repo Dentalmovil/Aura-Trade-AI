@@ -3,96 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura Trade AI - Dashboard</title>
+    <title>Aura Trade AI - Master Control</title>
     <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 95%;
-            max-width: 800px;
-            background: #161b22;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-            border: 1px solid #30363d;
-        }
-        h1 { color: #58a6ff; margin-bottom: 5px; }
-        .status-card {
-            background: #0d1117;
-            border-left: 5px solid #238636;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 8px;
-            text-align: left;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .data-box {
-            background: #21262d;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #30363d;
-        }
-        .label { color: #8b949e; font-size: 14px; margin-bottom: 5px; }
-        .value { font-size: 22px; font-weight: bold; color: #ffffff; }
-        .rsi-val { color: {{ color_rsi }}; } /* El color cambia según el valor del RSI */
-        .btn {
-            background-color: #238636;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 25px;
-            font-weight: bold;
-        }
+        :root { --bg: #0d1117; --card: #161b22; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --border: #30363d; }
+        body { background: var(--bg); color: #c9d1d9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid var(--border); width: 100%; max-width: 400px; box-sizing: border-box; position: relative; }
+        .alerta-activa { border-color: var(--green); box-shadow: 0 0 15px rgba(63, 185, 80, 0.3); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .box { background: #0d1117; padding: 10px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .val { font-size: 1.1rem; font-weight: bold; color: white; display: block; }
+        
+        .btn-panic { background: var(--red); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .btn-start { background: var(--green); }
+        
+        .historial { margin-top: 15px; background: #0d1117; border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
+        .historial-item { font-size: 0.75rem; padding: 6px 0; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; }
+        
+        input { background: #0d1117; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 5px; width: 100%; margin: 5px 0; box-sizing: border-box; }
+        .btn-save { background: var(--accent); color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
+    <div class="container {{ 'alerta-activa' if alerta }}">
+        <h2 style="color: var(--accent); margin: 0 0 5px 0; text-align: center;">Aura Trade AI 🛰️</h2>
+        <p style="font-size: 0.8rem; text-align: center; color: {{ var('--green') if config.activo else var('--red') }}; margin-bottom: 15px;">
+            ● {{ 'SISTEMA ESCANEANDO' if config.activo else 'SISTEMA DETENIDO' }}
+        </p>
 
-    <div class="container">
-        <h1>Aura Trade AI 🛰️</h1>
-        <p style="color: #8b949e;">Panel de Monitoreo en Tiempo Real</p>
+        <a href="/toggle" style="text-decoration: none;">
+            <button class="btn-panic {{ 'btn-start' if not config.activo }}">
+                {{ 'DETENER BOT (PÁNICO)' if config.activo else 'REANUDAR SISTEMA' }}
+            </button>
+        </a>
 
-        <div class="status-card">
-            <p>🟢 <strong>Estado:</strong> Ejecutando Motor de IA</p>
-            <p>📡 <strong>Última Señal:</strong> <span style="color: #58a6ff;">{{ senal }}</span></p>
+        <div style="background: #0d1117; padding: 8px; border-radius: 5px; text-align: center; border: 1px solid var(--border); margin-bottom: 15px;">
+            <span style="font-size: 0.85rem; color: var(--accent);">{{ senal }}</span>
         </div>
 
         <div class="grid">
-            <div class="data-box">
-                <div class="label">PRECIO BTC/USDT</div>
-                <div class="value">$ {{ precio }}</div>
-            </div>
-            <div class="data-box">
-                <div class="label">RSI ACTUAL</div>
-                <div class="value rsi-val">{{ rsi }}</div>
-            </div>
-            <div class="data-box">
-                <div class="label">GANANCIA HOY</div>
-                <div class="value" style="color: #3fb950;">+{{ profit_hoy }}%</div>
-            </div>
-            <div class="data-box">
-                <div class="label">OPS. ACTIVAS</div>
-                <div class="value">{{ ops_activas }}</div>
-            </div>
+            <div class="box"><span style="color: #8b949e; font-size: 0.6rem;">PRECIO</span><span class="val">${{ precio }}</span></div>
+            <div class="box"><span style="color: #8b949e; font-size: 0.6rem;">RSI</span><span class="val">{{ rsi }}</span></div>
         </div>
-        
-        <button class="btn" onclick="location.reload()">ACTUALIZAR MERCADO</button>
-    </div>
 
+        <div class="historial">
+            <p style="margin: 0 0 8px 0; font-size: 0.8rem; font-weight: bold;">Historial Reciente:</p>
+            {% for item in historial %}
+            <div class="historial-item">
+                <span>{{ item.hora }} - <strong>{{ item.par }}</strong></span>
+                <span style="color: var(--green);">${{ item.precio }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+            <form action="/update" method="POST">
+                <input type="text" name="symbol" value="{{ config.symbol }}">
+                <input type="number" name="rsi_limite" value="{{ config.rsi_limite }}">
+                <button type="submit" class="btn-save">GUARDAR AJUSTES</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
 
