@@ -20,7 +20,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install ccxt pandas scikit-learn requests plotly
+          pip install ccxt pandas scikit-learn requests plotly flask
           pip install pandas_ta --pre
 
       - name: Ejecutar Bot
@@ -28,6 +28,7 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
+
 
 
 
