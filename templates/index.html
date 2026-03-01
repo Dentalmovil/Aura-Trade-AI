@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aura Trade AI - Dashboard</title>
     <style>
-        /* Estilo moderno y oscuro tipo TradingView */
         body {
             background-color: #0d1117;
             color: #c9d1d9;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -17,61 +16,83 @@
             align-items: center;
         }
         .container {
-            width: 90%;
+            width: 95%;
             max-width: 800px;
             background: #161b22;
-            padding: 30px;
+            padding: 25px;
             border-radius: 15px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
             border: 1px solid #30363d;
         }
-        h1 { color: #58a6ff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.3); }
+        h1 { color: #58a6ff; margin-bottom: 5px; }
         .status-card {
             background: #0d1117;
             border-left: 5px solid #238636;
             padding: 15px;
             margin: 20px 0;
-            border-radius: 4px;
+            border-radius: 8px;
+            text-align: left;
         }
-        .metric { font-size: 24px; color: #3fb950; font-weight: bold; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .data-box {
+            background: #21262d;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+        .label { color: #8b949e; font-size: 14px; margin-bottom: 5px; }
+        .value { font-size: 22px; font-weight: bold; color: #ffffff; }
+        .rsi-val { color: {{ color_rsi }}; } /* El color cambia según el valor del RSI */
         .btn {
-            background-color: #21262d;
-            color: #58a6ff;
-            border: 1px solid #f0f6fc1a;
-            padding: 10px 20px;
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 12px 25px;
             border-radius: 6px;
             cursor: pointer;
-            transition: 0.3s;
+            margin-top: 25px;
+            font-weight: bold;
         }
-        .btn:hover { background-color: #30363d; border-color: #8b949e; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Aura Trade AI 🛰️</h1>
-        <p>Panel de Control del Bot de Trading</p>
+        <p style="color: #8b949e;">Panel de Monitoreo en Tiempo Real</p>
 
         <div class="status-card">
-            <p>Estado del Motor de IA: <strong>EJECUTANDO</strong></p>
-            <p>Conexión Telegram: <span style="color: #3fb950;">Sincronizado</span></p>
+            <p>🟢 <strong>Estado:</strong> Ejecutando Motor de IA</p>
+            <p>📡 <strong>Última Señal:</strong> <span style="color: #58a6ff;">{{ senal }}</span></p>
         </div>
 
-        <div style="display: flex; justify-content: space-around;">
-            <div>
-                <p>Ganancia Hoy</p>
-                <div class="metric">+{{ profit_hoy }}%</div>
+        <div class="grid">
+            <div class="data-box">
+                <div class="label">PRECIO BTC/USDT</div>
+                <div class="value">$ {{ precio }}</div>
             </div>
-            <div>
-                <p>Operaciones Activas</p>
-                <div class="metric">{{ ops_activas }}</div>
+            <div class="data-box">
+                <div class="label">RSI ACTUAL</div>
+                <div class="value rsi-val">{{ rsi }}</div>
+            </div>
+            <div class="data-box">
+                <div class="label">GANANCIA HOY</div>
+                <div class="value" style="color: #3fb950;">+{{ profit_hoy }}%</div>
+            </div>
+            <div class="data-box">
+                <div class="label">OPS. ACTIVAS</div>
+                <div class="value">{{ ops_activas }}</div>
             </div>
         </div>
-
-        <hr style="border: 0.5px solid #30363d; margin: 20px 0;">
         
-        <button class="btn" onclick="location.reload()">Refrescar Datos</button>
+        <button class="btn" onclick="location.reload()">ACTUALIZAR MERCADO</button>
     </div>
 
 </body>
 </html>
+
