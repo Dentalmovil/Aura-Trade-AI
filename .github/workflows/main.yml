@@ -3,7 +3,7 @@ name: Aura Trade AI Runner
 on:
   schedule:
     - cron: '0 * * * *' # Se ejecuta cada hora
-  workflow_dispatch: # El botón que ya aprendiste a usar
+  workflow_dispatch: # Botón manual
 
 jobs:
   build:
@@ -15,16 +15,18 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11' # CAMBIADO de 3.10 a 3.11 para compatibilidad
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install ccxt pandas pandas_ta scikit-learn requests
+          pip install ccxt pandas scikit-learn requests
+          pip install pandas-ta # Instalación individual para evitar conflictos
 
       - name: Ejecutar Bot
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
+
 
