@@ -1,15 +1,18 @@
-# 🚀 Aura Trade AI
+# Aura Trade AI 🛰️
 
-Sistema automatizado de análisis de criptomonedas desarrollado íntegramente desde un entorno móvil. Utiliza Inteligencia Artificial para predecir movimientos de precio en el par BTC/USDT.
+Bot de trading inteligente con análisis de **IA (Random Forest)**, indicadores técnicos y alertas en tiempo real a Telegram.
 
-## 🧠 Características
-- **Motor de IA:** Clasificador Random Forest entrenado con datos históricos.
-- **Análisis Técnico:** Integración de indicadores de momentum (RSI) y tendencia (EMA).
-- **Notificaciones:** Alertas en tiempo real a través de Telegram Bot API.
-- **Automatización:** Ejecución programada cada hora mediante GitHub Actions.
+## 🚀 Características
+- **Cerebro con IA:** Predicciones basadas en RSI, EMA y Bandas de Bollinger.
+- **Panel Web:** Interfaz oscura tipo TradingView con gráficos interactivos.
+- **Alertas:** Notificaciones instantáneas por Telegram.
+- **Automatización:** Ejecución programada mediante GitHub Actions.
 
-## 🛠️ Tecnologías
-- Python 3.10
-- Scikit-Learn (IA)
-- Pandas TA (Indicadores Técnicos)
-- CCXT (Conexión con Exchanges)
+## 🛠️ Instalación
+1. Clona el repositorio.
+2. Instala las dependencias: `pip install -r requirements.txt`.
+3. Configura tus `Secrets` en GitHub (TELEGRAM_TOKEN y CHAT_ID).
+
+## 📊 Vista Previa
+El sistema analiza el par **BTC/USDT** y genera señales de compra cuando la IA detecta una probabilidad alta de subida y el RSI está en niveles óptimos.
+
