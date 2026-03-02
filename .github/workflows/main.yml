@@ -2,8 +2,11 @@ name: Aura Trade AI Runner
 
 on:
   schedule:
-    - cron: '0 * * * *' # Se ejecuta cada hora automáticamente
+    - cron: '0 * * * *' # Se ejecuta cada hora
   workflow_dispatch: # Permite ejecución manual
+
+permissions:
+  contents: write # Permite al bot guardar el historial de ganancias
 
 jobs:
   build:
@@ -20,14 +23,16 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install ccxt pandas scikit-learn requests
-          pip install pandas_ta --pre
+          pip install ccxt pandas scikit-learn requests pandas_ta --pre
 
       - name: Ejecutar Bot
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+          BINANCE_SECRET_KEY: ${{ secrets.BINANCE_SECRET_KEY }}
         run: python main.py
+
 
 
 
