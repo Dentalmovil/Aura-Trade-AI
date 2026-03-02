@@ -5,7 +5,7 @@ from datetime import datetime
 from ia_engine import preparar_ia
 from telegram_util import enviar_mensaje
 
-# CONFIGURACIÓN DE CONEXIÓN SEGURA
+# 1. CONEXIÓN SEGURA A BINANCE (Igual que hiciste con Telegram)
 exchange = ccxt.binance({
     'apiKey': os.environ.get('BINANCE_API_KEY'),
     'secret': os.environ.get('BINANCE_SECRET_KEY'),
@@ -16,62 +16,44 @@ exchange = ccxt.binance({
 symbols = ['BTC/USDT', 'BNB/USDT', 'XRP/USDT', 'LTC/USDT']
 
 def ejecutar_bot():
-    print(f"Iniciando Aura Trade AI - {datetime.now()}")
+    print(f"🚀 Aura Trade AI Iniciando - {datetime.now()}")
     
     for symbol in symbols:
         try:
-            # 1. Obtener datos del mercado
+            # 2. Obtener velas del mercado
             bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=100)
             df = pd.DataFrame(bars, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
             
             precio_actual = df['close'].iloc[-1]
             
-            # 2. Análisis de IA con Probabilidad
-            modelo, features, confianza = preparar_ia(df) # Ajustado para recibir confianza
+            # 3. Llamar a tu nueva IA (la de la Imagen 5)
+            # Retorna: modelo, nombres de features y el % de confianza
+            modelo, features, confianza = preparar_ia(df)
+            
+            # Hacer la predicción real
             prediccion = modelo.predict(df[features].tail(1))[0]
             
-            # 3. Lógica de Inversión Automática
+            # 4. Lógica de Envío a Telegram
+            emoji = "🟢" if confianza > 80 else "🟡" if confianza > 60 else "⚪"
+            
             if prediccion == 1 and confianza > 75:
-                ejecutar_orden_segura(symbol, precio_actual, confianza)
+                # Si la IA está muy segura de que subirá
+                tp = precio_actual * 1.02
+                sl = precio_actual * 0.99
+                mensaje = (f"🚀 *SEÑAL DE COMPRA: {symbol}*\n"
+                           f"💰 Precio: ${precio_actual}\n"
+                           f"📊 Confianza: {emoji} {confianza:.1f}%\n"
+                           f"🎯 TP: {tp:.2f} | 🛑 SL: {sl:.2f}")
+                enviar_mensaje(mensaje)
+                # Aquí podrías poner la orden real en Binance si ya probaste el bot
             else:
-                enviar_reporte_rutina(symbol, precio_actual, confianza)
+                # Reporte de rutina (para que sepas que el bot está vivo)
+                enviar_mensaje(f"📊 MONITOR: {symbol}\nPrecio: ${precio_actual}\nConfianza IA: {emoji} {confianza:.1f}%")
 
         except Exception as e:
-            print(f"Error en {symbol}: {e}")
-
-def ejecutar_orden_segura(symbol, precio, confianza):
-    # Ejemplo con 20 USDT de inversión
-    try:
-        cantidad_usdt = 20 
-        order = exchange.create_market_buy_order(symbol, cantidad_usdt)
-        
-        tp = precio * 1.02 # Ganancia 2%
-        sl = precio * 0.99 # Stop Loss 1%
-        
-        # Orden de protección OCO
-        exchange.private_post_order_oco({
-            'symbol': symbol.replace('/', ''),
-            'side': 'SELL',
-            'quantity': order['filled'],
-            'price': f"{tp:.4f}",
-            'stopPrice': f"{sl * 1.005:.4f}",
-            'stopLimitPrice': f"{sl:.4f}",
-        })
-        
-        enviar_mensaje(f"✅ COMPRA REALIZADA: {symbol}\nConfianza: {confianza:.1f}%\nTP: {tp:.2f} | SL: {sl:.2f}")
-    except Exception as e:
-        enviar_mensaje(f"⚠️ Error operando {symbol}: {e}")
-
-def enviar_reporte_rutina(symbol, precio, confianza):
-    emoji = "🟢" if confianza > 80 else "🟡"
-    enviar_mensaje(f"📊 MONITOR: {symbol}\nPrecio: ${precio}\nIA Confianza: {emoji} {confianza:.1f}%")
+            print(f"❌ Error procesando {symbol}: {e}")
 
 if __name__ == "__main__":
     ejecutar_bot()
-# Esto simula la sección de "Historial de Señales" de tu HTML en Telegram
-def enviar_historial_telegram(historial_vía_ia):
-    mensaje_historial = "📜 *ÚLTIMOS MOVIMIENTOS (Historial)*\n\n"
-    for item in historial_vía_ia[-5:]: # Muestra los últimos 5
-        mensaje_historial += f"🕒 {item['hora']} | {item['par']} | 💰 ${item['precio']}\n"
-    enviar_mensaje(mensaje_historial)
+
 
