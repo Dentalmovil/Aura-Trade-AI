@@ -55,5 +55,6 @@ def ejecutar_bot():
 
 if __name__ == "__main__":
     ejecutar_bot()
-enviar_mensaje("🔔 Prueba de conexión: Aura Trade AI está intentando hablar contigo.")
+      enviar_mensaje("🔔 Prueba de conexión: Aura Trade AI está intentando hablar contigo.")
+    ejecutar_bot()
 
