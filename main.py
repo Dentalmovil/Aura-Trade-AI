@@ -1,58 +1,71 @@
 import ccxt
 import pandas as pd
+import os
 from datetime import datetime
 from ia_engine import preparar_ia
 from telegram_util import enviar_mensaje
 
-# Monedas a vigilar (BNB, XRP, LTC y BTC como base)
+# CONFIGURACIÓN DE CONEXIÓN SEGURA
+exchange = ccxt.binance({
+    'apiKey': os.environ.get('BINANCE_API_KEY'),
+    'secret': os.environ.get('BINANCE_SECRET_KEY'),
+    'enableRateLimit': True,
+    'options': {'defaultType': 'spot'}
+})
+
 symbols = ['BTC/USDT', 'BNB/USDT', 'XRP/USDT', 'LTC/USDT']
-exchange = ccxt.binance()
 
 def ejecutar_bot():
-    hora_actual = datetime.now().hour
-    # Modo nocturno: de 11 PM a 7 AM (UTC)
-    es_noche = hora_actual >= 23 or hora_actual <= 7
+    print(f"Iniciando Aura Trade AI - {datetime.now()}")
     
-    resumen = "🤖 *REPORTAJE DE ACTIVIDAD AURA AI*\n\n"
-    total_retorno_24h = 0
-    enviar_reporte_rutina = not es_noche 
-
     for symbol in symbols:
         try:
-            bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=24)
+            # 1. Obtener datos del mercado
+            bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=100)
             df = pd.DataFrame(bars, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
             
             precio_actual = df['close'].iloc[-1]
-            precio_hace_1h = df['close'].iloc[-2]
             
-            # 1. Alerta de Emergencia (Si cae más del 5% en 1h)
-            cambio_1h = ((precio_actual - precio_hace_1h) / precio_hace_1h) * 100
-            if cambio_1h <= -5.0:
-                enviar_mensaje(f"🚨 *MODO EMERGENCIA: {symbol}*\n📉 Caída crítica del {cambio_1h:.2f}% en la última hora.")
-
-            # 2. Análisis de IA
-            modelo, features = preparar_ia(df)
+            # 2. Análisis de IA con Probabilidad
+            modelo, features, confianza = preparar_ia(df) # Ajustado para recibir confianza
             prediccion = modelo.predict(df[features].tail(1))[0]
             
-            # 3. Cálculo de Ganancia 24h
-            retorno_24h = ((precio_actual - df['close'].iloc[0]) / df['close'].iloc[0]) * 100
-            total_retorno_24h += retorno_24h
-            
-            if prediccion == 1:
-                enviar_mensaje(f"🚀 *SEÑAL DE COMPRA: {symbol}*\n💰 Precio: ${precio_actual:,.4f}\n📊 Rendimiento 24h: {retorno_24h:+.2f}%")
-            
-            resumen += f"✅ {symbol}: ${precio_actual:,.2f} ({retorno_24h:+.2f}%)\n"
-            
+            # 3. Lógica de Inversión Automática
+            if prediccion == 1 and confianza > 75:
+                ejecutar_orden_segura(symbol, precio_actual, confianza)
+            else:
+                enviar_reporte_rutina(symbol, precio_actual, confianza)
+
         except Exception as e:
             print(f"Error en {symbol}: {e}")
 
-    # Enviar reporte solo si es de día
-    if enviar_reporte_rutina:
-        promedio = total_retorno_24h / len(symbols)
-        resumen += f"\n💰 *Rendimiento Portafolio 24h:* {promedio:+.2f}%"
-        enviar_mensaje(resumen)
-    else:
-        print("🌙 Modo Nocturno: Solo se enviarán señales de compra o emergencias.")
+def ejecutar_orden_segura(symbol, precio, confianza):
+    # Ejemplo con 20 USDT de inversión
+    try:
+        cantidad_usdt = 20 
+        order = exchange.create_market_buy_order(symbol, cantidad_usdt)
+        
+        tp = precio * 1.02 # Ganancia 2%
+        sl = precio * 0.99 # Stop Loss 1%
+        
+        # Orden de protección OCO
+        exchange.private_post_order_oco({
+            'symbol': symbol.replace('/', ''),
+            'side': 'SELL',
+            'quantity': order['filled'],
+            'price': f"{tp:.4f}",
+            'stopPrice': f"{sl * 1.005:.4f}",
+            'stopLimitPrice': f"{sl:.4f}",
+        })
+        
+        enviar_mensaje(f"✅ COMPRA REALIZADA: {symbol}\nConfianza: {confianza:.1f}%\nTP: {tp:.2f} | SL: {sl:.2f}")
+    except Exception as e:
+        enviar_mensaje(f"⚠️ Error operando {symbol}: {e}")
+
+def enviar_reporte_rutina(symbol, precio, confianza):
+    emoji = "🟢" if confianza > 80 else "🟡"
+    enviar_mensaje(f"📊 MONITOR: {symbol}\nPrecio: ${precio}\nIA Confianza: {emoji} {confianza:.1f}%")
 
 if __name__ == "__main__":
     ejecutar_bot()
+
