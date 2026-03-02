@@ -28,3 +28,4 @@ El bot envía señales en tiempo real directamente a un canal privado de **Teleg
 ---
 *Descargo de responsabilidad: Este software es para fines educativos. El trading de criptomonedas implica un alto riesgo.*
 
+https://t.me/AuraTrade_123_bot
