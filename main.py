@@ -68,4 +68,10 @@ def enviar_reporte_rutina(symbol, precio, confianza):
 
 if __name__ == "__main__":
     ejecutar_bot()
+# Esto simula la sección de "Historial de Señales" de tu HTML en Telegram
+def enviar_historial_telegram(historial_vía_ia):
+    mensaje_historial = "📜 *ÚLTIMOS MOVIMIENTOS (Historial)*\n\n"
+    for item in historial_vía_ia[-5:]: # Muestra los últimos 5
+        mensaje_historial += f"🕒 {item['hora']} | {item['par']} | 💰 ${item['precio']}\n"
+    enviar_mensaje(mensaje_historial)
 
