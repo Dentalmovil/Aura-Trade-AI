@@ -5,7 +5,7 @@ from datetime import datetime
 from ia_engine import preparar_ia
 from telegram_util import enviar_mensaje
 
-# 1. CONEXIÓN SEGURA A BINANCE (Igual que hiciste con Telegram)
+# 1. CONEXIÓN SEGURA A BINANCE
 exchange = ccxt.binance({
     'apiKey': os.environ.get('BINANCE_API_KEY'),
     'secret': os.environ.get('BINANCE_SECRET_KEY'),
@@ -26,8 +26,7 @@ def ejecutar_bot():
             
             precio_actual = df['close'].iloc[-1]
             
-            # 3. Llamar a tu nueva IA (la de la Imagen 5)
-            # Retorna: modelo, nombres de features y el % de confianza
+            # 3. Llamar a la IA
             modelo, features, confianza = preparar_ia(df)
             
             # Hacer la predicción real
@@ -37,7 +36,7 @@ def ejecutar_bot():
             emoji = "🟢" if confianza > 80 else "🟡" if confianza > 60 else "⚪"
             
             if prediccion == 1 and confianza > 75:
-                # Si la IA está muy segura de que subirá
+                # Señal de Compra
                 tp = precio_actual * 1.02
                 sl = precio_actual * 0.99
                 mensaje = (f"🚀 *SEÑAL DE COMPRA: {symbol}*\n"
@@ -45,16 +44,21 @@ def ejecutar_bot():
                            f"📊 Confianza: {emoji} {confianza:.1f}%\n"
                            f"🎯 TP: {tp:.2f} | 🛑 SL: {sl:.2f}")
                 enviar_mensaje(mensaje)
-                # Aquí podrías poner la orden real en Binance si ya probaste el bot
             else:
-                # Reporte de rutina (para que sepas que el bot está vivo)
-                enviar_mensaje(f"📊 MONITOR: {symbol}\nPrecio: ${precio_actual}\nConfianza IA: {emoji} {confianza:.1f}%")
+                # Reporte de rutina
+                mensaje_rutina = (f"📊 MONITOR: {symbol}\n"
+                                 f"💵 Precio: ${precio_actual}\n"
+                                 f"🧠 Confianza IA: {emoji} {confianza:.1f}%")
+                enviar_mensaje(mensaje_rutina)
 
         except Exception as e:
             print(f"❌ Error procesando {symbol}: {e}")
 
+# BLOQUE DE ARRANQUE CORREGIDO
 if __name__ == "__main__":
+    # Enviamos la prueba de conexión primero
+    enviar_mensaje("🔔 *Conexión Exitosa:* Aura Trade AI está en línea y analizando el mercado.")
+    # Iniciamos el análisis
     ejecutar_bot()
-      enviar_mensaje("🔔 Prueba de conexión: Aura Trade AI está intentando hablar contigo.")
-    ejecutar_bot()
+
 
