@@ -5,10 +5,9 @@ from datetime import datetime
 from ia_engine import preparar_ia
 from telegram_util import enviar_mensaje
 
-# 1. CONEXIÓN A BINANCE
+# 1. USAMOS LA API PÚBLICA (Para evitar el bloqueo de ubicación de GitHub)
+# No enviamos apiKey ni secret aquí para que Binance nos deje pasar
 exchange = ccxt.binance({
-    'apiKey': os.environ.get('BINANCE_API_KEY'),
-    'secret': os.environ.get('BINANCE_SECRET_KEY'),
     'enableRateLimit': True,
     'options': {'defaultType': 'spot'}
 })
@@ -17,12 +16,11 @@ symbols = ['BTC/USDT', 'BNB/USDT', 'XRP/USDT', 'LTC/USDT']
 
 def ejecutar_bot():
     print(f"🚀 Aura Trade AI Iniciando - {datetime.now()}")
-    # Este mensaje ya lo recibes, ahora vamos a ver los que siguen
-    enviar_mensaje("📡 *Aura Trade AI:* Iniciando análisis de mercado...")
+    enviar_mensaje("📡 *Aura Trade AI:* Iniciando análisis con API Pública...")
     
     for symbol in symbols:
         try:
-            # 2. Obtener datos
+            # 2. Obtener datos (Las velas son públicas, no hay bloqueo aquí)
             bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=100)
             df = pd.DataFrame(bars, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
             precio_actual = df['close'].iloc[-1]
@@ -31,10 +29,9 @@ def ejecutar_bot():
             modelo, features, confianza = preparar_ia(df)
             prediccion = modelo.predict(df[features].tail(1))[0]
             
-            # 4. Lógica de Mensajería (Ajustada para que SIEMPRE hable)
+            # 4. Lógica de Mensajería
             emoji = "🟢" if confianza > 80 else "🟡" if confianza > 50 else "⚪"
             
-            # Si la IA predice subida y tiene una confianza decente (>55%)
             if prediccion == 1 and confianza > 55:
                 tp = precio_actual * 1.02
                 sl = precio_actual * 0.99
@@ -44,11 +41,10 @@ def ejecutar_bot():
                        f"🎯 TP: {tp:.2f} | 🛑 SL: {sl:.2f}")
                 enviar_mensaje(msj)
             else:
-                # REPORTE DE RUTINA (Para que veas que el bot está analizando)
                 msj_rutina = (f"📊 *MONITOR:* {symbol}\n"
                              f"💵 Precio: ${precio_actual}\n"
                              f"🧠 Confianza: {emoji} {confianza:.1f}%\n"
-                             f"📝 Estado: Mercado no apto para compra.")
+                             f"📝 Estado: Analizando tendencia...")
                 enviar_mensaje(msj_rutina)
 
         except Exception as e:
@@ -57,6 +53,7 @@ def ejecutar_bot():
 
 if __name__ == "__main__":
     ejecutar_bot()
+
 
 
 
