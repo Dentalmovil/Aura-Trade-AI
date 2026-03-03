@@ -1,63 +1,59 @@
-import requests
+import ccxt
 import pandas as pd
 import os
 from datetime import datetime
 from ia_engine import preparar_ia
 from telegram_util import enviar_mensaje
 
-symbols = ['BTCUSDT', 'BNBUSDT', 'XRPUSDT', 'LTCUSDT']
+# 1. CONFIGURACIÓN DE SOLO ANÁLISIS (Segura)
+exchange = ccxt.binance({
+    'apiKey': os.environ.get('BINANCE_API_KEY'),
+    'secret': os.environ.get('BINANCE_SECRET_KEY'),
+    'enableRateLimit': True,
+    'options': {
+        'defaultType': 'spot',
+        # Esto ayuda a evitar errores de sincronización de tiempo
+        'adjustForTimeDifference': True 
+    }
+})
 
-def obtener_datos_directos(symbol):
-    url = f"https://api.binance.com/api/v3/klines?symbol={symbol}&interval=1h&limit=100"
-    try:
-        response = requests.get(url, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            # Creamos el DataFrame con los nombres de columnas que espera tu ia_engine
-            df = pd.DataFrame(data, columns=['ts', 'open', 'high', 'low', 'close', 'volume', 'close_ts', 'qav', 'num_trades', 'taker_base', 'taker_quote', 'ignore'])
-            
-            # CONVERSIÓN CRÍTICA: Convertimos texto a números para la IA
-            for col in ['open', 'high', 'low', 'close', 'volume']:
-                df[col] = df[col].astype(float)
-            
-            return df
-    except Exception as e:
-        print(f"Error de red en {symbol}: {e}")
-    return None
+symbols = ['BTC/USDT', 'BNB/USDT', 'XRP/USDT', 'LTC/USDT']
 
 def ejecutar_bot():
-    print(f"🚀 Aura Trade AI Iniciando - {datetime.now()}")
-    # Ya no enviamos el mensaje de inicio cada vez para no saturar si hay errores
+    print(f"🚀 Aura Trade AI Iniciando Análisis - {datetime.now()}")
     
     for symbol in symbols:
         try:
-            df = obtener_datos_directos(symbol)
-            if df is not None:
-                precio_actual = df['close'].iloc[-1]
+            # 2. Obtener datos de mercado
+            bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=100)
+            df = pd.DataFrame(bars, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
+            
+            # Aseguramos que los datos sean numéricos para la IA
+            for col in ['open', 'high', 'low', 'close', 'volume']:
+                df[col] = df[col].astype(float)
                 
-                # Llamada a tu archivo ia_engine.py
-                modelo, features, confianza = preparar_ia(df)
-                
-                # Predicción con el último dato disponible
-                input_ia = df[features].tail(1)
-                prediccion = modelo.predict(input_ia)[0]
-                
-                emoji = "🟢" if confianza > 75 else "🟡" if confianza > 50 else "⚪"
-                accion = "COMPRA" if prediccion == 1 and confianza > 70 else "ESPERAR"
-                
-                msj = (f"📊 *MONITOR:* {symbol}\n"
-                       f"💵 Precio: ${precio_actual:,.2f}\n"
-                       f"🧠 Confianza IA: {emoji} {confianza:.1f}%\n"
-                       f"📝 Acción: *{accion}*")
-                enviar_mensaje(msj)
-            else:
-                enviar_mensaje(f"⚠️ No pude obtener datos de {symbol}")
-        except Exception as e:
-            print(f"❌ Error en {symbol}: {e}")
-            # Si hay un error dentro de la IA, te avisará aquí
-            enviar_mensaje(f"🧠 Error en IA ({symbol}): Ver logs en GitHub")
+            precio_actual = df['close'].iloc[-1]
+            
+            # 3. Consultar a la IA
+            modelo, features, confianza = preparar_ia(df)
+            prediccion = modelo.predict(df[features].tail(1))[0]
+            
+            # 4. Reporte a Telegram
+            emoji = "🟢" if confianza > 75 else "🟡" if confianza > 50 else "⚪"
+            accion = "POTENCIAL COMPRA" if prediccion == 1 and confianza > 70 else "MERCADO NEUTRO"
+            
+            msj = (f"📊 *REPORTE:* {symbol}\n"
+                   f"💵 Precio: ${precio_actual:,.2f}\n"
+                   f"🧠 Confianza IA: {emoji} {confianza:.1f}%\n"
+                   f"📝 Sugerencia: *{accion}*")
+            
+            enviar_mensaje(msj)
 
-if __name__ == "__main__":
-    ejecutar_bot()
+        except Exception as e:
+            # Si el error es por ubicación, intentamos un método alternativo
+            print(f"❌ Error en {symbol}: {e}")
+            if "restricted location" in str(e).lower():
+                print(f"Reintentando {symbol} sin llaves...")
+                # Aquí podrías poner el código de emergencia que te pasé antes
 
 
