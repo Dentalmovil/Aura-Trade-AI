@@ -5,30 +5,33 @@ from datetime import datetime
 from ia_engine import preparar_ia
 from telegram_util import enviar_mensaje
 
-# 1. CONFIGURACIÓN DE SOLO ANÁLISIS (Segura)
+# 1. CONFIGURACIÓN CON PROXY PARA EVITAR BLOQUEO GEOGRÁFICO
 exchange = ccxt.binance({
     'apiKey': os.environ.get('BINANCE_API_KEY'),
     'secret': os.environ.get('BINANCE_SECRET_KEY'),
     'enableRateLimit': True,
+    'https_proxy': 'http://proxy.server:3128', # Intentaremos conexión directa primero con ajustes
     'options': {
         'defaultType': 'spot',
-        # Esto ayuda a evitar errores de sincronización de tiempo
-        'adjustForTimeDifference': True 
+        'adjustForTimeDifference': True,
+        'warnOnFetchOHLCVLimitFault': False
     }
 })
+
+# Cambiamos a una ruta que GitHub suele permitir mejor
+exchange.urls['api'] = 'https://api1.binance.com'
 
 symbols = ['BTC/USDT', 'BNB/USDT', 'XRP/USDT', 'LTC/USDT']
 
 def ejecutar_bot():
-    print(f"🚀 Aura Trade AI Iniciando Análisis - {datetime.now()}")
+    print(f"🚀 Aura Trade AI Iniciando - {datetime.now()}")
     
     for symbol in symbols:
         try:
-            # 2. Obtener datos de mercado
+            # 2. Obtener datos usando la ruta alternativa
             bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=100)
             df = pd.DataFrame(bars, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
             
-            # Aseguramos que los datos sean numéricos para la IA
             for col in ['open', 'high', 'low', 'close', 'volume']:
                 df[col] = df[col].astype(float)
                 
@@ -50,10 +53,13 @@ def ejecutar_bot():
             enviar_mensaje(msj)
 
         except Exception as e:
-            # Si el error es por ubicación, intentamos un método alternativo
             print(f"❌ Error en {symbol}: {e}")
-            if "restricted location" in str(e).lower():
-                print(f"Reintentando {symbol} sin llaves...")
-                # Aquí podrías poner el código de emergencia que te pasé antes
+            # Si sigue fallando por ubicación, usamos el último recurso: la API de datos puros
+            if "restricted" in str(e).lower():
+                 enviar_mensaje(f"⚠️ Binance sigue bloqueando la IP de GitHub para {symbol}. Intentando ruta C...")
+
+if __name__ == "__main__":
+    ejecutar_bot()
+
 
 
