@@ -31,35 +31,39 @@ def guardar_operacion(datos):
         writer.writerow(datos)
 
 def ejecutar_bot():
-    print(f"🚀 Aura Trade AI V3.5 Activo - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"🚀 Aura Trade AI V4.0 (ATR Mode) Activo - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     for symbol in SYMBOLS:
         try:
-            # Obtener datos (300 velas para SMA 200)
+            # Obtener datos (300 velas para SMA 200 y ATR)
             bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=300)
             df = pd.DataFrame(bars, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
             df[['open', 'high', 'low', 'close']] = df[['open', 'high', 'low', 'close']].astype(float)
+
+            # --- CONSULTA IA (Ahora calcula el ATR internamente) ---
+            modelo, features, confianza = preparar_ia(df)
+            prediccion = modelo.predict(df[features].tail(1))[0]
 
             # --- CÁLCULOS TÉCNICOS ---
             precio_actual = df['close'].iloc[-1]
             sma_200 = df['close'].rolling(window=200).mean().iloc[-1]
             tendencia_alcista = precio_actual > sma_200
+            
+            # Recuperamos el valor del ATR calculado en ia_engine
+            atr_actual = df['ATR'].iloc[-1]
 
-            # --- GESTIÓN DE RIESGO ---
-            # Stop Loss (SL): 0.5% bajo el mínimo de las últimas 5h
-            # Take Profit (TP): Ratio 2:1 basado en el riesgo
-            sl_sugerido = df['low'].tail(5).min() * 0.995
+            # --- GESTIÓN DE RIESGO DINÁMICA (ATR) ---
+            # Stop Loss (SL): Precio actual menos 1.5 veces la volatilidad (ATR)
+            # Esto evita que movimientos bruscos normales te saquen de la jugada.
+            sl_sugerido = precio_actual - (atr_actual * 1.5)
             riesgo = precio_actual - sl_sugerido
+            
+            # Take Profit (TP): Ratio 2:1 basado en el riesgo real
             tp_sugerido = precio_actual + (riesgo * 2)
 
-            # --- CONSULTA IA ---
-            modelo, features, confianza = preparar_ia(df)
-            prediccion = modelo.predict(df[features].tail(1))[0]
-
             # --- LÓGICA DE SEÑALES ---
-            # Umbral de confianza: 80% + Tendencia Alcista obligatoria para "Fuerte"
             enviar_alerta = False
-            
+
             if prediccion == 1 and confianza > 80 and tendencia_alcista:
                 emoji, accion = "🔥", "🚀 COMPRA FUERTE (Tendencia OK)"
                 enviar_alerta = True
@@ -79,10 +83,9 @@ def ejecutar_bot():
                        f"--------------------------\n"
                        f"🎯 TP: ${tp_sugerido:,.2f}\n"
                        f"🛑 SL: ${sl_sugerido:,.2f}")
-                
+
                 enviar_mensaje(msj)
-                
-                # Guardar para el resumen semanal
+
                 guardar_operacion({
                     'fecha': datetime.now().strftime('%Y-%m-%d %H:%M'),
                     'simbolo': symbol,
@@ -92,16 +95,12 @@ def ejecutar_bot():
                     'sl': sl_sugerido
                 })
 
-            # Alerta extra si el precio está rompiendo el SL calculado
+            # Alerta extra si el precio rompe el SL dinámico
             if precio_actual <= sl_sugerido and tendencia_alcista:
-                enviar_mensaje(f"🚨 *ALERTA:* {symbol} ha tocado nivel de STOP LOSS (${sl_sugerido:,.2f})")
+                enviar_mensaje(f"🚨 *ALERTA:* {symbol} ha tocado nivel de STOP LOSS DINÁMICO (${sl_sugerido:,.2f})")
 
         except Exception as e:
             print(f"❌ Error en {symbol}: {e}")
 
 if __name__ == "__main__":
     ejecutar_bot()
-
-
-
-
