@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Permite ejecución manual
 
 permissions:
-  contents: write # Permite al bot guardar el historial de ganancias
+  contents: write # Permite al bot guardar cambios en el repo
 
 jobs:
   build:
@@ -23,7 +23,8 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install ccxt pandas scikit-learn requests pandas_ta --pre
+          # Instalación limpia sin el error de versiones beta (--pre)
+          pip install ccxt==4.1.100 pandas pandas_ta scikit-learn requests plotly flask
 
       - name: Ejecutar Bot
         env:
@@ -32,6 +33,14 @@ jobs:
           BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
           BINANCE_SECRET_KEY: ${{ secrets.BINANCE_SECRET_KEY }}
         run: python main.py
+
+      - name: Guardar historial de ganancias
+        if: always()
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add .
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update history" && git push)
 
 
 
